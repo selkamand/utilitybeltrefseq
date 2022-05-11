@@ -206,7 +206,7 @@ download_assembly <- function(target_assembly_accession, output_folder = getwd()
 
   message("downloading assembly:\n\t[", target_assembly_accession, "]\n\nfrom the RefSeq ftp link \n\t[", assembly_fasta_path, "]\nto:\t", full_dest_filepath)
 
-  download.file(assembly_fasta_path, destfile =  basename(assembly_fasta_path))
+  download.file(assembly_fasta_path, destfile =  full_dest_filepath)
 
   return(full_dest_filepath)
 }
