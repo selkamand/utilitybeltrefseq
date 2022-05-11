@@ -204,7 +204,7 @@ download_assembly <- function(target_assembly_accession, output_folder = getwd()
   assertthat::assert_that(dir.exists(output_folder), msg = utilitybeltassertions::fmterror("Could not find folder: ", output_folder))
   full_dest_filepath = paste0(output_folder, "/", basename(assembly_fasta_path))
 
-  message("downloading assembly:\n\t[", target_assembly_accession, "]\n\nfrom the RefSeq ftp link \n\t[", assembly_fasta_path, "] to ", full_dest_filepath)
+  message("downloading assembly:\n\t[", target_assembly_accession, "]\n\nfrom the RefSeq ftp link \n\t[", assembly_fasta_path, "]\nto:\t", full_dest_filepath)
 
   download.file(assembly_fasta_path, destfile =  basename(assembly_fasta_path))
 
