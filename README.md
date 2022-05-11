@@ -29,31 +29,15 @@ devtools::install_github("selkamand/utilitybeltrefseq")
 
 Say you want to find the best reference genome for *Escherichia coli*.
 
-First we download a list of available assemblies from refseq.
+First we load the library then download a list of available assemblies
+from refseq.
 
 ``` r
 library(utilitybeltrefseq)
-load_refseq_data_frame_from_ftp()
-#> # A tibble: 259,672 × 25
-#>    assembly_accession bioproject  biosample    wgs_master refseq_category  taxid
-#>    <chr>              <chr>       <chr>        <chr>      <chr>            <int>
-#>  1 GCF_000001215.4    PRJNA164    "SAMN028037… ""         reference geno…   7227
-#>  2 GCF_000001405.40   PRJNA168    ""           ""         reference geno…   9606
-#>  3 GCF_000001635.27   PRJNA169    ""           ""         reference geno…  10090
-#>  4 GCF_000001735.4    PRJNA116    "SAMN030814… ""         reference geno…   3702
-#>  5 GCF_000001905.1    PRJNA70973  "SAMN029536… "AAGU0000… representative…   9785
-#>  6 GCF_000001985.1    PRJNA32665  "SAMN029536… "ABAR0000… representative… 441960
-#>  7 GCF_000002035.6    PRJNA13922  "SAMN069301… ""         reference geno…   7955
-#>  8 GCF_000002075.1    PRJNA209509 "SAMN029536… "AASC0000… representative…   6500
-#>  9 GCF_000002235.5    PRJNA13728  "SAMN008294… "AAGJ0000… representative…   7668
-#> 10 GCF_000002285.5    PRJNA12384  "SAMN029536… "AAEX0000… na                9615
-#> # … with 259,662 more rows, and 19 more variables: species_taxid <int>,
-#> #   organism_name <chr>, infraspecific_name <chr>, isolate <chr>,
-#> #   version_status <chr>, assembly_level <chr>, release_type <chr>,
-#> #   genome_rep <chr>, seq_rel_date <chr>, asm_name <chr>, submitter <chr>,
-#> #   gbrs_paired_asm <chr>, paired_asm_comp <chr>, ftp_path <chr>,
-#> #   excluded_from_refseq <chr>, relation_to_type_material <chr>,
-#> #   asm_not_live_date <chr>, ref_score <dbl>, best_ref <lgl>
+```
+
+``` r
+update_refseq_data_cache()
 ```
 
 For best results, run the above command every couple of months to stay
@@ -69,7 +53,7 @@ Now that we have the species level taxid, we can run
 
 ``` r
 choose_best_assembly(taxid_of_interest = 562)
-#> Multile (2) best hits with score = 101400. We will just return the the most recently added assembly with this quality
+#> Multiple (2) best hits with score = 101400. We will just return the the most recently added assembly with this quality
 #> Chosen Assembly:
 #>   assembly_accession      GCF_000008865.2 
 #>   bioproject      PRJNA57781 
@@ -110,7 +94,7 @@ assembly. To return all of the high quality assemblies you can run:
    break_ties_based_on_newest_sequence_added = FALSE,
    return_accession_only = TRUE # set this to false to get more info about each assembly
    )
-#> Multile (2) best hits with score = 101400. Please choose one manually or if you haven't already - add an intraspecific filter and try again
+#> Multiple (2) best hits with score = 101400. Please choose one manually or if you haven't already - add an intraspecific filter and try again
 #> [1] "GCF_000005845.2" "GCF_000008865.2"
 ```
 

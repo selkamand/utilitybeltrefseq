@@ -36,11 +36,14 @@ devtools::install_github("selkamand/utilitybeltrefseq")
 
 Say you want to find the best reference genome for *Escherichia coli*.
 
-First we download a list of available assemblies from refseq.
+First we load the library then download a list of available assemblies from refseq.
+
+```{r}
+library(utilitybeltrefseq)
+```
 
 ```{r echo=TRUE, eval=FALSE}
-library(utilitybeltrefseq)
-load_refseq_data_frame_from_ftp()
+update_refseq_data_cache()
 ```
 
 For best results, run the above command every couple of months to stay up to date with whats currently in refseq.

@@ -19,11 +19,11 @@ load_refseq_data_frame_from_ftp <- function(){
 
   required_columns = c("species_taxid", "refseq_category", "organism_name", "assembly_level", "assembly_accession", "version_status")
   utilitybeltassertions::assert_names_include(refseq_data_frame, expected_names = required_columns)
-  assertthat::assert_that(nrow(refseq_dataframe) > 0, msg = utilitybeltassertions::fmterror("Refseq Dataframe has 0 rows. Somethings probably wrong with the ftp download link. Please ensure you're using the latest version of this package, and if the problem persists, open a github issue so package maintaner can fix this"))
+  assertthat::assert_that(nrow(refseq_data_frame) > 0, msg = utilitybeltassertions::fmterror("Refseq Dataframe has 0 rows. Somethings probably wrong with the ftp download link. Please ensure you're using the latest version of this package, and if the problem persists, open a github issue so package maintaner can fix this"))
 
   # Guess best reference
   refseq_data_frame = refseq_data_frame %>%
-    dplyr::group_by(taxid) %>%
+    dplyr::group_by(species_taxid) %>%
     dplyr::mutate(
       ref_score = 0 +
         (refseq_category=="reference genome") * 10^5 +
@@ -40,6 +40,12 @@ load_refseq_data_frame_from_ftp <- function(){
   return(refseq_data_frame)
 }
 
+#' Write refseq dataframe
+#'
+#' @param refseq_data_frame
+#'
+#' @return NULL
+#'
 write_refseq_dataframe <- function(refseq_data_frame){
   outfile = paste0(system.file(package='utilitybeltrefseq'), "/assembly_summary_refseq.txt", collapse = "")
 
@@ -50,6 +56,22 @@ write_refseq_dataframe <- function(refseq_data_frame){
       row.names = FALSE,
       sep = "\t"
     )
+}
+
+#' Update refseq data cache
+#'
+#' Download a file that lists metadata for all refseq entries (including ftp path).
+#' We will use this later to download assemblies.
+#'
+#' @return NULL. Run for side-effects
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' update_refseq_data_cache()
+#' }
+update_refseq_data_cache <- function(){
+  write_refseq_dataframe(load_refseq_data_frame_from_ftp())
 }
 
 #' Load data from cache
@@ -71,6 +93,7 @@ load_refseq_data_frame_from_cache <- function(){
   required_columns = c("taxid", "species_taxid", "refseq_category", "organism_name", "assembly_level", "assembly_accession", "version_status", "ref_score", "seq_rel_date")
   #browser()
   utilitybeltassertions::assert_names_include(refseq_data_frame, expected_names = required_columns)
+  assertthat::assert_that(nrow(refseq_data_frame) > 0)
   return(refseq_data_frame)
 }
 
@@ -114,19 +137,19 @@ choose_best_assembly <- function(refseq_data_frame = load_refseq_data_frame_from
 
     if(break_ties_based_on_newest_sequence_added){
       best_assemblies_final=dplyr::slice_max(best_assemblies, seq_rel_date)
-      message("Multile (", num_of_tied_assemblies,")", " best hits with score = ",score_of_tophit,". We will just return the the most recently added assembly with this quality\n")
+      message("Multiple (", num_of_tied_assemblies,")", " best hits with score = ",score_of_tophit,". We will just return the the most recently added assembly with this quality\n")
       prettyprint_single_row_df(best_assemblies_final, title = "Chosen Assembly: ")
       if(return_accession_only) return(best_assemblies_final[["assembly_accession"]]) else return(dplyr::tibble(best_assemblies_final))
     }
     else{
-      message("Multile (", num_of_tied_assemblies,")", " best hits with score = ",score_of_tophit, ". Please choose one manually or if you haven't already - add an intraspecific filter and try again")
+      message("Multiple (", num_of_tied_assemblies,")", " best hits with score = ",score_of_tophit, ". Please choose one manually or if you haven't already - add an intraspecific filter and try again")
       best_assemblies_final=dplyr::tibble(best_assemblies)
       if(return_accession_only) return(best_assemblies_final[["assembly_accession"]]) else return(dplyr::tibble(best_assemblies_final))
     }
 
   }
 
-  if(return_accession_only) return(best_assemblies[["assembly_accession"]]) else return(dplyr::tibble(best_assemblies))
+  if(return_accession_only) {prettyprint_single_row_df(best_assemblies, title = "Chosen Assembly: "); return(best_assemblies[["assembly_accession"]]) } else return(dplyr::tibble(best_assemblies))
 }
 
 #' Pretty Print a Single Refseq Entry
