@@ -16,6 +16,9 @@ download_best_assembly(taxid_of_interest, ...)
     \item{\code{refseq_data_frame}}{from \strong{load_refseq_data_frame_from_cache()}}
   }}
 }
+\value{
+filepath of downloaded file
+}
 \description{
 Download_best_assembly
 }

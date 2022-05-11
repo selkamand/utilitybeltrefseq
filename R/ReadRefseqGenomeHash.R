@@ -180,9 +180,9 @@ prettyprint_single_row_df <- function(single_row_of_tabular_data, title = NULL){
 #' @param target_assembly_accession accession of target assembly
 #' @param outfile_dir directory to save assembly fasta file into
 #'
-#' @return filepath of expeted download
+#' @return filepath of downloaded file
 #' @export
-download_assembly <- function(refseq_data_frame = load_refseq_data_frame_from_cache(), target_assembly_accession){
+download_assembly <- function(target_assembly_accession, output_folder = getwd(), refseq_data_frame = load_refseq_data_frame_from_cache()){
 
   #browser()
   assertthat::assert_that(target_assembly_accession %in% refseq_data_frame[["assembly_accession"]])
@@ -196,19 +196,15 @@ download_assembly <- function(refseq_data_frame = load_refseq_data_frame_from_ca
   ftp_root = refseq_data_frame[["ftp_path"]]
   assembly_fasta_path = paste0(ftp_root, "/", sequence_file_name, "_genomic.fna.gz")
   #browser()
-  message("downloading assembly:\n\t[", target_assembly_accession, "]\n\nfrom the RefSeq ftp link \n\t[", assembly_fasta_path, "]")
+
+  assertthat::assert_that(dir.exists(output_folder), msg = utilitybeltassertions::fmterror("Could not find folder: ", output_folder))
+  full_dest_filepath = paste0(output_folder, "/", basename(assembly_fasta_path))
+
+  message("downloading assembly:\n\t[", target_assembly_accession, "]\n\nfrom the RefSeq ftp link \n\t[", assembly_fasta_path, "] to ", full_dest_filepath)
 
   download.file(assembly_fasta_path, destfile =  basename(assembly_fasta_path))
 
-  full_dest_filepath = paste0(getwd(), "/", basename(assembly_fasta_path))
   return(full_dest_filepath)
-  # res=system(paste0("aria2c ", assembly_fasta_path))
-  # if (res != 0)
-  #   message("Download failed")
-  # else
-  #   message("download complete")
-
-  #sys.calls(
 }
 
 
@@ -242,34 +238,36 @@ download_assembly_aria2c <- function(refseq_data_frame = load_refseq_data_frame_
 #'
 #' @inheritDotParams download_assembly
 #' @inheritParams choose_best_assembly
+#' @inherit download_assembly return
 #' @export
 #'
 download_best_assembly <- function(taxid_of_interest, ...){
   best_asssembly=target_assembly_accession = choose_best_assembly(taxid_of_interest = taxid_of_interest, return_accession_only = TRUE)
   message("Attempting to download the best assembly for taxid ", taxid_of_interest, " (", best_asssembly, ")")
-  download_assembly(target_assembly_accession = best_asssembly, ...)
+  res=download_assembly(target_assembly_accession = best_asssembly, ...)
+  return(res)
 }
 
-download_annotations <- function(refseq_data_frame = load_refseq_data_frame_from_cache(), target_assembly_accession, outfile_dir = "."){
-
-  utilitybeltassertions::assert_program_exists_in_path("aria2c")
-  #browser()
-  assertthat::assert_that(target_assembly_accession %in% refseq_data_frame[["assembly_accession"]])
-
-  refseq_data_frame = refseq_data_frame %>%
-    dplyr::filter(assembly_accession %in% target_assembly_accession)
-
-  assertthat::assert_that(nrow(refseq_data_frame) == 1)
-
-  sequence_file_name = basename(refseq_data_frame[["ftp_path"]])
-  ftp_root = refseq_data_frame[["ftp_path"]]
-  assembly_fasta_path = paste0(ftp_root, "/", sequence_file_name, "_genomic.gtf.gz")
-  #browser()
-  message("downloading assembly:\n\t[", target_assembly_accession, "]\n\nfrom the RefSeq ftp link \n\t[", assembly_fasta_path, "]")
-
-  res=system(paste0("aria2c ", assembly_fasta_path))
-  if (res != 0)
-   message("Download failed")
-  else
-    message("download complete")
-}
+# download_annotations <- function(refseq_data_frame = load_refseq_data_frame_from_cache(), target_assembly_accession, outfile_dir = "."){
+#
+#   utilitybeltassertions::assert_program_exists_in_path("aria2c")
+#   #browser()
+#   assertthat::assert_that(target_assembly_accession %in% refseq_data_frame[["assembly_accession"]])
+#
+#   refseq_data_frame = refseq_data_frame %>%
+#     dplyr::filter(assembly_accession %in% target_assembly_accession)
+#
+#   assertthat::assert_that(nrow(refseq_data_frame) == 1)
+#
+#   sequence_file_name = basename(refseq_data_frame[["ftp_path"]])
+#   ftp_root = refseq_data_frame[["ftp_path"]]
+#   assembly_fasta_path = paste0(ftp_root, "/", sequence_file_name, "_genomic.gtf.gz")
+#   #browser()
+#   message("downloading assembly:\n\t[", target_assembly_accession, "]\n\nfrom the RefSeq ftp link \n\t[", assembly_fasta_path, "]")
+#
+#   res=system(paste0("aria2c ", assembly_fasta_path))
+#   if (res != 0)
+#    message("Download failed")
+#   else
+#     message("download complete")
+# }

@@ -5,19 +5,20 @@
 \title{Download reference genome}
 \usage{
 download_assembly(
-  refseq_data_frame = load_refseq_data_frame_from_cache(),
-  target_assembly_accession
+  target_assembly_accession,
+  output_folder = getwd(),
+  refseq_data_frame = load_refseq_data_frame_from_cache()
 )
 }
 \arguments{
-\item{refseq_data_frame}{from \strong{load_refseq_data_frame_from_cache()}}
-
 \item{target_assembly_accession}{accession of target assembly}
+
+\item{refseq_data_frame}{from \strong{load_refseq_data_frame_from_cache()}}
 
 \item{outfile_dir}{directory to save assembly fasta file into}
 }
 \value{
-filepath of expeted download
+filepath of downloaded file
 }
 \description{
 Actually download the genome using aria2c
