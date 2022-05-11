@@ -1,4 +1,4 @@
 ^utilitybeltrefseq\.Rproj$
 ^\.Rproj\.user$
 ^README\.Rmd$
-*.fna.gz
+.*.fna.gz
