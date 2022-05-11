@@ -109,7 +109,11 @@ load_refseq_data_frame_from_cache <- function(){
 #' @return
 #' @export
 #'
-choose_best_assembly <- function(refseq_data_frame = load_refseq_data_frame_from_cache(), taxid_of_interest, intraspecific_filter = NA, break_ties_based_on_newest_sequence_added = TRUE, return_accession_only = TRUE){
+choose_best_assembly <- function(taxid_of_interest, intraspecific_filter = NA, break_ties_based_on_newest_sequence_added = TRUE, return_accession_only = TRUE, refseq_data_frame = load_refseq_data_frame_from_cache()){
+
+  # Trigger error if refseq_data_frame doesnt exist
+  invisible(head(refseq_data_frame, n=1))
+  #browser()
 
   # is species in refseq database
   assertthat::assert_that(taxid_of_interest %in% refseq_data_frame[["species_taxid"]],
