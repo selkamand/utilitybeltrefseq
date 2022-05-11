@@ -13,9 +13,9 @@ download_assembly(
 \arguments{
 \item{target_assembly_accession}{accession of target assembly}
 
-\item{refseq_data_frame}{from \strong{load_refseq_data_frame_from_cache()}}
+\item{output_folder}{directory to save assembly fasta file into (string)}
 
-\item{outfile_dir}{directory to save assembly fasta file into}
+\item{refseq_data_frame}{from \strong{load_refseq_data_frame_from_cache()}}
 }
 \value{
 filepath of downloaded file

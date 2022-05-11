@@ -13,6 +13,7 @@ download_best_assembly(taxid_of_interest, ...)
   Arguments passed on to \code{\link[=download_assembly]{download_assembly}}
   \describe{
     \item{\code{target_assembly_accession}}{accession of target assembly}
+    \item{\code{output_folder}}{directory to save assembly fasta file into (string)}
     \item{\code{refseq_data_frame}}{from \strong{load_refseq_data_frame_from_cache()}}
   }}
 }

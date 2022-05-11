@@ -178,7 +178,7 @@ prettyprint_single_row_df <- function(single_row_of_tabular_data, title = NULL){
 #'
 #' @inheritParams choose_best_assembly
 #' @param target_assembly_accession accession of target assembly
-#' @param outfile_dir directory to save assembly fasta file into
+#' @param output_folder directory to save assembly fasta file into (string)
 #'
 #' @return filepath of downloaded file
 #' @export
