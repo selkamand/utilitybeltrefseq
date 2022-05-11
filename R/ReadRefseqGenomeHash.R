@@ -85,7 +85,7 @@ update_refseq_data_cache <- function(){
 #' refseq_data_frame = load_refseq_data_frame_from_cache()
 load_refseq_data_frame_from_cache <- function(){
   expected_filepath = paste0(system.file(package='utilitybeltrefseq'), "/assembly_summary_refseq.txt", collapse = "")
-  assertthat::assert_that(file.exists(expected_filepath), msg = paste0("Could not find a cached refseq dataframe at [",expected_filepath,"]. Please run write_refseq_dataframe(load_refseq_data_frame_from_ftp())"))
+  assertthat::assert_that(file.exists(expected_filepath), msg = paste0("Could not find a cached refseq dataframe at [",expected_filepath,"]. Please run update_refseq_data_cache"))
 
   #browser()
   refseq_data_frame = data.table::fread(expected_filepath, sep = "\t", check.names = FALSE)
