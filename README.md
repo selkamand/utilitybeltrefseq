@@ -1,24 +1,18 @@
-
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
 # utilitybeltrefseq
 
 <!-- badges: start -->
 
-[![Lifecycle:
-experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 
 <!-- badges: end -->
 
-The goal of utilitybeltrefseq is to make it easy to find and download
-the best refseq assemblies available for any given species. All you need
-to know is the species [NCBI taxonomy
-ID](https://www.ncbi.nlm.nih.gov/taxonomy)
+The goal of utilitybeltrefseq is to make it easy to find and download the best refseq assemblies available for any given species. All you need to know is the species [NCBI taxonomy ID](https://www.ncbi.nlm.nih.gov/taxonomy)
 
 ## Installation
 
-You can install the development version of utilitybeltrefseq from
-[GitHub](https://github.com/selkamand/utilitybeltrefseq) with:
+You can install the development version of utilitybeltrefseq from [GitHub](https://github.com/selkamand/utilitybeltrefseq) with:
 
 ``` r
 # install.packages("devtools")
@@ -29,8 +23,7 @@ devtools::install_github("selkamand/utilitybeltrefseq")
 
 Say you want to find the best reference genome for *Escherichia coli*.
 
-First we load the library then download a list of available assemblies
-from refseq.
+First we load the library then download a list of available assemblies from refseq.
 
 ``` r
 library(utilitybeltrefseq)
@@ -40,16 +33,11 @@ library(utilitybeltrefseq)
 update_refseq_data_cache()
 ```
 
-For best results, run the above command every couple of months to stay
-up to date with whats currently in refseq.
+For best results, run the above command every couple of months to stay up to date with whats currently in refseq.
 
-Next, we need to find the NCBI taxonomy ID of our species of interest.
-We can find that [here](https://www.ncbi.nlm.nih.gov/taxonomy) (taxid:
-562). We could also have used the **taxize** package if we wanted to
-stay within R.
+Next, we need to find the NCBI taxonomy ID of our species of interest. We can find that [here](https://www.ncbi.nlm.nih.gov/taxonomy) (taxid: 562). We could also have used the **taxize** package if we wanted to stay within R.
 
-Now that we have the species level taxid, we can run
-`choose_best_assembly`
+Now that we have the species level taxid, we can run `choose_best_assembly`
 
 ``` r
 choose_best_assembly(taxid_of_interest = 562)
@@ -83,10 +71,7 @@ choose_best_assembly(taxid_of_interest = 562)
 #> [1] "GCF_000008865.2"
 ```
 
-Note that we get a warning that there are multiple ‘best’ assemblies. If
-there are multiple strains in a species with complete assemblies - it
-his hard to know which to return. We choose the most recently added
-assembly. To return all of the high quality assemblies you can run:
+Note that we get a warning that there are multiple ‘best’ assemblies. If there are multiple strains in a species with complete assemblies - it his hard to know which to return. We choose the most recently added assembly. To return all of the high quality assemblies you can run:
 
 ``` r
  choose_best_assembly(
@@ -98,12 +83,9 @@ assembly. To return all of the high quality assemblies you can run:
 #> [1] "GCF_000005845.2" "GCF_000008865.2"
 ```
 
-Keep an eye on the intraspecific name column. Often can use this to
-choose which strain you’re after. See `?choose_best_assembly` for
-details.
+Keep an eye on the intraspecific name column. Often can use this to choose which strain you’re after. See `?choose_best_assembly` for details.
 
-Once we have the assembly accession we’re interested in, we can download
-it:
+Once we have the assembly accession we’re interested in, we can download it:
 
 ``` r
  download_assembly(
@@ -111,8 +93,7 @@ it:
    )
 ```
 
-If we just want to quickly download a ref-genome of our species of
-interest we can just run
+If we just want to quickly download a ref-genome of our species of interest we can just run
 
 ``` r
 download_best_assembly(taxid_of_interest = 562)

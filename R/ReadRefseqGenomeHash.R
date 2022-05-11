@@ -180,7 +180,7 @@ prettyprint_single_row_df <- function(single_row_of_tabular_data, title = NULL){
 #' @param target_assembly_accession accession of target assembly
 #' @param outfile_dir directory to save assembly fasta file into
 #'
-#' @return Run for its side effects
+#' @return filepath of expeted download
 #' @export
 download_assembly <- function(refseq_data_frame = load_refseq_data_frame_from_cache(), target_assembly_accession){
 
@@ -199,6 +199,9 @@ download_assembly <- function(refseq_data_frame = load_refseq_data_frame_from_ca
   message("downloading assembly:\n\t[", target_assembly_accession, "]\n\nfrom the RefSeq ftp link \n\t[", assembly_fasta_path, "]")
 
   download.file(assembly_fasta_path, destfile =  basename(assembly_fasta_path))
+
+  full_dest_filepath = paste0(getwd(), "/", basename(assembly_fasta_path))
+  return(full_dest_filepath)
   # res=system(paste0("aria2c ", assembly_fasta_path))
   # if (res != 0)
   #   message("Download failed")

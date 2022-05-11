@@ -17,7 +17,7 @@ download_assembly(
 \item{outfile_dir}{directory to save assembly fasta file into}
 }
 \value{
-Run for its side effects
+filepath of expeted download
 }
 \description{
 Actually download the genome using aria2c
