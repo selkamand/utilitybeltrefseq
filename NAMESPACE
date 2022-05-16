@@ -2,9 +2,10 @@
 
 export("%>%")
 export(choose_best_assembly)
+export(cli)
+export(delete_refseq_data_cache)
 export(download_assembly)
 export(download_best_assembly)
 export(load_refseq_data_frame_from_cache)
-export(load_refseq_data_frame_from_ftp)
 export(update_refseq_data_cache)
 importFrom(magrittr,"%>%")

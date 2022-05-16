@@ -19,7 +19,8 @@ Imports:
     data.table,
     dplyr,
     magrittr,
-    utilitybeltassertions (>= 0.0.0.9000)
+    utilitybeltassertions (>= 0.0.0.9000),
+    utils
 Remotes: 
     selkamand/utilitybeltassertions
 URL: https://github.com/selkamand/utilitybeltrefseq

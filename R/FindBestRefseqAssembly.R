@@ -6,14 +6,13 @@
 #' We will use this later to download assemblies.
 #'
 #' @return refseq dataframe describing available assemblies
-#' @export
 #'
 #' @examples
 #' \dontrun{
 #' load_refseq_data_frame_from_ftp()
 #' }
 load_refseq_data_frame_from_ftp <- function(){
-  refseq_data_frame = read.csv("https://ftp.ncbi.nlm.nih.gov/genomes/refseq/assembly_summary_refseq.txt", sep = "\t", header=TRUE, skip = 1, check.names = FALSE)
+  refseq_data_frame = utils::read.csv("https://ftp.ncbi.nlm.nih.gov/genomes/refseq/assembly_summary_refseq.txt", sep = "\t", header=TRUE, skip = 1, check.names = FALSE)
   names(refseq_data_frame) <- sub(pattern = "# ?", replacement = "", x = names(refseq_data_frame))
   # assembly_accession
 
@@ -40,17 +39,34 @@ load_refseq_data_frame_from_ftp <- function(){
   return(refseq_data_frame)
 }
 
+cache_dir_location <- function(){
+  return("~/.utilitybeltrefseq")
+}
+
+cache_file_location <- function(){
+  return(paste0(cache_dir_location(),"/assembly_summary_refseq.txt"))
+}
+
 #' Write refseq dataframe
 #'
-#' @param refseq_data_frame
+#' @param refseq_data_frame dataframe produced by [load_refseq_data_frame_from_ftp]
 #'
 #' @return NULL
 #'
 write_refseq_dataframe <- function(refseq_data_frame){
-  outfile = paste0(system.file(package='utilitybeltrefseq'), "/assembly_summary_refseq.txt", collapse = "")
+  cache_dir_location=cache_dir_location()
+  if(!dir.exists(cache_dir_location)){
+    message("Creating folder to store refseq cache: ", cache_dir_location)
+    dir.create(cache_dir_location())
+  }
+  else{
+    message("Using existing folder to store refseq cache: ", cache_dir_location)
+  }
 
-  message("Writing table to refseq table to file: [", outfile, "]")
-    write.table(
+  outfile = cache_file_location()
+
+  message("Writing refseq table to file: [", outfile, "]")
+    utils::write.table(
       x = refseq_data_frame,
       file = outfile,
       row.names = FALSE,
@@ -71,7 +87,9 @@ write_refseq_dataframe <- function(refseq_data_frame){
 #' update_refseq_data_cache()
 #' }
 update_refseq_data_cache <- function(){
+  message("Updating the refseq data cache usually take several minutes ...")
   write_refseq_dataframe(load_refseq_data_frame_from_ftp())
+  message("Done")
 }
 
 #' Load data from cache
@@ -84,7 +102,7 @@ update_refseq_data_cache <- function(){
 #' @examples
 #' refseq_data_frame = load_refseq_data_frame_from_cache()
 load_refseq_data_frame_from_cache <- function(){
-  expected_filepath = paste0(system.file(package='utilitybeltrefseq'), "/assembly_summary_refseq.txt", collapse = "")
+  expected_filepath = cache_file_location()
   assertthat::assert_that(file.exists(expected_filepath), msg = paste0("Could not find a cached refseq dataframe at [",expected_filepath,"]. Please run update_refseq_data_cache"))
 
   #browser()
@@ -97,6 +115,27 @@ load_refseq_data_frame_from_cache <- function(){
   return(refseq_data_frame)
 }
 
+#' Delete the refseq Cache
+#'
+#' Remove existing cache. Good practice to run before uninstalling package.
+#'
+#' @export
+#'
+delete_refseq_data_cache <- function(){
+  if( dir.exists(cache_dir_location())){
+    confirmed = utils::askYesNo("Are you sure you want to delete the folder: ", dir.exists())
+
+    if(confirmed){
+      unlink(cache_dir_location(),recursive=TRUE)
+      message("Cache deleted")
+    }
+    else
+      message("Cache not deleted")
+  }
+  else{
+   message("Nothing to delete. No cache at: ", cache_dir_location())
+  }
+}
 
 
 #' Best Assembly
@@ -105,14 +144,15 @@ load_refseq_data_frame_from_cache <- function(){
 #' @param intraspecific_filter e.g. 'strain=Raji'. For options look at the infraspecific_name column of the refseq_data_frame (string)
 #' @param break_ties_based_on_newest_sequence_added if we cant decide which is the best ref to use because they;re so similar - just pick the most recently uploaded sequence
 #' @param refseq_data_frame from \strong{load_refseq_data_frame_from_cache()}
+#' @param return_accession_only Return just the best assembly accession. If false will return a dataframe with accession ID plus lots of other info (bool)
 #'
-#' @return
+#' @return if return_accession_only=TRUE then best assembly accession (string). Otherwise returns dataframe with accession ID of best assembly plus lots of other info (bool)
 #' @export
 #'
 choose_best_assembly <- function(taxid_of_interest, intraspecific_filter = NA, break_ties_based_on_newest_sequence_added = TRUE, return_accession_only = TRUE, refseq_data_frame = load_refseq_data_frame_from_cache()){
 
   # Trigger error if refseq_data_frame doesnt exist
-  invisible(head(refseq_data_frame, n=1))
+  invisible(utils::head(refseq_data_frame, n=1))
   #browser()
 
   # is species in refseq database
@@ -158,7 +198,9 @@ choose_best_assembly <- function(taxid_of_interest, intraspecific_filter = NA, b
 
 #' Pretty Print a Single Refseq Entry
 #'
+#' @param title text printed at the top of the prettyprint summary (string)
 #' @param single_row_of_tabular_data any dataframe with 1 row. Doesn't require any particular column_names / row typing. (data.frame)
+#'
 #' @return NULL
 prettyprint_single_row_df <- function(single_row_of_tabular_data, title = NULL){
   assertthat::assert_that(nrow(single_row_of_tabular_data) == 1, msg = utilitybeltassertions::fmterror("Function `prettyprint_assembly_entry` was designed to work with single row dataframes. Input dataframe has ", nrow(single_row_of_tabular_data), " entries"))
@@ -206,7 +248,7 @@ download_assembly <- function(target_assembly_accession, output_folder = getwd()
 
   message("downloading assembly:\n\t[", target_assembly_accession, "]\n\nfrom the RefSeq ftp link \n\t[", assembly_fasta_path, "]\nto:\t", full_dest_filepath)
 
-  download.file(assembly_fasta_path, destfile =  full_dest_filepath)
+  utils::download.file(assembly_fasta_path, destfile =  full_dest_filepath)
 
   return(full_dest_filepath)
 }
@@ -275,3 +317,19 @@ download_best_assembly <- function(taxid_of_interest, ...){
 #   else
 #     message("download complete")
 # }
+
+#' List commandline scripts
+#'
+#' @export
+#'
+#' @examples
+#' cli()
+cli <- function(){
+  executable_paths = dir(system.file("cli/", package = "utilitybeltrefseq"), pattern = ".R$", full.names = TRUE)
+  message(
+    "Ensure scripts are executable by running the following in your terminal:
+    chmod +x ", paste0(executable_paths, collapse=" "),
+    "\n\nThen run any of the following commands scripts to learn about usage: \n\t", paste0(executable_paths, collapse="\n")
+    )
+}
+
