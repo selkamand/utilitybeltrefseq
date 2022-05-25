@@ -6,9 +6,9 @@
 \usage{
 align_reads(
   bwa_index_prefix,
-  outfile_prefix,
   forward_reads,
   reverse_reads,
+  outfile_prefix,
   bwa_options = "",
   threads = parallel::detectCores()
 )
@@ -20,7 +20,11 @@ align_reads(
 
 \item{reverse_reads}{path to fastq file containing reverse reads (string)}
 
-\item{bwa_options}{}
+\item{outfile_prefix}{prefix used for output alignment files}
+
+\item{bwa_options}{supply any other options to bwa-mem2 mem command. For example '-k 50' will change min seed length to 50. (string)}
+
+\item{threads}{how many cup threads to use (int)}
 }
 \value{
 outfile path
