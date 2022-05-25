@@ -3,3 +3,4 @@
 ^README\.Rmd$
 .*.fna.gz
 inst/testfiles/
+^LICENSE\.md$
