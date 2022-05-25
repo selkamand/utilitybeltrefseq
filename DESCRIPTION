@@ -19,9 +19,13 @@ Imports:
     data.table,
     dplyr,
     magrittr,
+    parallel,
     utilitybeltassertions (>= 0.0.0.9000),
     utils
 Remotes: 
     selkamand/utilitybeltassertions
 URL: https://github.com/selkamand/utilitybeltrefseq
 BugReports: https://github.com/selkamand/utilitybeltrefseq/issues
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3

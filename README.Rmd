@@ -34,6 +34,8 @@ devtools::install_github("selkamand/utilitybeltrefseq")
 
 ## Example
 
+### Downloading the best assembly
+
 Say you want to find the best reference genome for *Escherichia coli*.
 
 First we load the library then download a list of available assemblies from refseq.
@@ -79,5 +81,22 @@ Once we have the assembly accession we're interested in, we can download it:
 If we just want to quickly download a ref-genome of our species of interest we can just run
 
 ```{r, eval=FALSE}
-download_best_assembly(taxid_of_interest = 562)
+best_assembly = download_best_assembly(taxid_of_interest = 562)
+```
+
+### Aligning reads to assembly
+
+If you have bwa-mem2 installed, this R package can also be used to align paired reads to the best assembly. This can be installed with `brew install bwa2`. Can also find linux binaries [here](https://github.com/bwa-mem2/bwa-mem2/releases). To make a bam index file you will also need `samtools` installed and available on PATH
+
+```{r, eval=FALSE}
+forward_reads = "path/to/forward_reads.fq"
+reverse_reads = "path/to/reverse_reads.fq"
+taxid_of_interest = 562
+outfile_prefix = "E. coli"
+
+taxid_of_interest |>
+  download_best_assembly() |>
+  prep_for_alignment() %>%
+  align_reads(forward_reads = forward_reads, reverse_reads = reverse_reads, outfile_prefix = outfile_prefix) |>
+  bam_index() # remove this line and |> line if you don't want an indexed bam / don't have samtools installed
 ```

@@ -220,7 +220,7 @@ prettyprint_single_row_df <- function(single_row_of_tabular_data, title = NULL){
 
 #' Download reference genome
 #'
-#' Actually download the genome using aria2c
+#' Actually download the genome assembly
 #'
 #' @inheritParams choose_best_assembly
 #' @param target_assembly_accession accession of target assembly
@@ -332,4 +332,140 @@ cli <- function(){
     "\n\nThen run any of the following commands scripts to learn about usage: \n\t", paste0(executable_paths, collapse="\n")
     )
 }
+
+
+#' Prep a refseq assembly for alignment
+#'
+#' @param path_to_assembly_fasta path to assembly fasta
+#'
+#' @return prefix of bwa-indexed (character)
+#' @export
+#'
+prep_for_alignment <- function(path_to_assembly_fasta){
+  utilitybeltassertions::assert_filenames_have_valid_extensions(
+    filenames = path_to_assembly_fasta,
+    valid_extensions = c("fa.gz", "fasta.gz", "fa", "fasta", "fna", "fna.gz"),
+    ignore_case = TRUE
+    )
+
+  utilitybeltassertions::assert_program_exists_in_path(program_names = "bwa-mem2")
+
+  indexing_command = paste0("bwa-mem2 index ", path_to_assembly_fasta)
+
+  message("Running: ", indexing_command)
+  return_code = system(indexing_command)
+
+  if(return_code != 0){
+   stop(paste0("bwa-mem2 indexing of reference genome has failed. exit code ", return_code))
+  }
+
+  message(utilitybeltassertions::fmtsuccess("\nReference Genome Indexing Complete (bwa2-mem index)"))
+  return(path_to_assembly_fasta)
+}
+
+#' Align Reads
+#'
+#' @param bwa_index_prefix prefix of indexed reference genome (e.g. output of prep_for_alignment()) (string)
+#' @param outfile_prefix prefix used for output alignment files
+#' @param forward_reads path to fastq file containing forward reads (string)
+#' @param reverse_reads path to fastq file containing reverse reads (string)
+#' @param bwa_options supply any other options to bwa-mem2 mem command. For example '-k 50' will change min seed length to 50. (string)
+#' @param threads how many cup threads to use (int)
+#'
+#' @return outfile path
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#'
+#' prep_for_alignment()
+#' }
+align_reads <- function(bwa_index_prefix, forward_reads, reverse_reads, outfile_prefix, bwa_options="", threads=parallel::detectCores()){
+
+  utilitybeltassertions::assert_program_exists_in_path(program_names = c("bwa-mem2", "samtools"))
+
+  utilitybeltassertions::assert_filenames_have_valid_extensions(
+    filenames = c(forward_reads, reverse_reads),
+    valid_extensions = c("fastq", "fastq.gz", "fq", "fq.gz"),
+    ignore_case = TRUE
+    )
+
+  utilitybeltassertions::assert_files_exist(filepaths = c(
+    paste0(bwa_index_prefix, ".0123"),
+    paste0(bwa_index_prefix, ".amb"),
+    paste0(bwa_index_prefix, ".ann"),
+    paste0(bwa_index_prefix, ".pac"),
+    paste0(bwa_index_prefix, ".bwt.2bit.64"),
+    paste0(bwa_index_prefix, ".bwt.8bit.32")
+    ), supplementary_error_message = "Please run prep_for_alignment() on your refseq assembly to generate these files")
+
+
+  message("Running all processes using: ", threads, " cores")
+
+  outfile_name = paste0(outfile_prefix, ".sorted.bam")
+
+  if(bwa_options != ""){
+    bwa_options = paste0(bwa_options, " ")
+  }
+
+  alignment_command = paste0(
+    "bwa-mem2 mem -t ", threads, " ", bwa_options, bwa_index_prefix, " ", forward_reads, " ", reverse_reads, " | samtools sort -O bam -@ ", threads, " -o ", outfile_name
+    )
+
+  message("Running: ", alignment_command)
+
+  exit_code = system(alignment_command)
+
+  #exit code 6 doesnt effect actual alignment results - just the description of time taken after. Fixed in latest version of bwa-mem but these are not readily installable on mac
+  assertthat::assert_that(exit_code %in% c(0, 6), msg = utilitybeltassertions::fmterror("Alignment failed. Exit code [", exit_code,"]"))
+
+  outfile_path = normalizePath(outfile_name)
+
+  message(utilitybeltassertions::fmtsuccess("\n\nAlignment Complete. Result at: ", outfile_path))
+
+  return(outfile_path)
+}
+
+
+
+bam_index_create_command <- function(path_to_sorted_bam, threads){
+  indexing_command = "samtools index -@ <threads> <path_to_sorted_bam>" %>%
+    sub(pattern = "<threads>", replacement = threads) %>%
+    sub(pattern = "<path_to_sorted_bam>", replacement = path_to_sorted_bam)
+  return(indexing_command)
+}
+
+#' Bam Index
+#'
+#' Index a bam file
+#'
+#' Produce a bai index for a sorted bam. Requires samtools to be installed.
+#'
+#' @param path_to_sorted_bam path to a coordinate sorted bam file (string)
+#' @param threads number of cores to use for multithreading (int)
+#'
+#' @return path to sorted bam (string)
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' bam_index("path/to/sorted/bam")
+#' }
+bam_index <- function(path_to_sorted_bam, threads = parallel::detectCores()){
+  utilitybeltassertions::assert_program_exists_in_path(program_names = c("samtools"))
+  utilitybeltassertions::assert_files_exist(path_to_sorted_bam)
+
+
+  indexing_command = bam_index_create_command(path_to_sorted_bam, threads)
+  message("Running: ", indexing_command)
+  exit_code = system(indexing_command)
+
+  assertthat::assert_that(exit_code == 0, msg = utilitybeltassertions::fmterror("Indexing of bam file [",path_to_sorted_bam,"] failed. Exit code [", exit_code, "]"))
+  message(utilitybeltassertions::fmtsuccess("\n\nIndexing Complete"))
+
+  return(path_to_sorted_bam)
+}
+
+
+
 

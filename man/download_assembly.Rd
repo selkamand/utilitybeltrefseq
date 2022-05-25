@@ -21,5 +21,5 @@ download_assembly(
 filepath of downloaded file
 }
 \description{
-Actually download the genome using aria2c
+Actually download the genome assembly
 }
