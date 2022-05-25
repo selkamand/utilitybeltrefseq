@@ -15,7 +15,7 @@ Example:
 
 arguments <- docopt(doc)
 
-print(arguments)
+#print(arguments)
 
 download_best_assembly(taxid_of_interest = arguments$taxid_of_interest)
 
