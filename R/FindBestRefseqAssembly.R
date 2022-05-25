@@ -40,7 +40,11 @@ load_refseq_data_frame_from_ftp <- function(){
 }
 
 cache_dir_location <- function(){
-  return("~/.utilitybeltrefseq")
+  cache_dir_path_environment_var=Sys.getenv("UTILITYBELTREFSEQ_CACHE_LOCATION")
+  if(cache_dir_path_environment_var != "")
+    return(cache_dir_path_environment_var) # Allow environmental variable $UTILITYBELTREFSEQ_CACHE_LOCATION to overrwrite default cache location (~/.utilitybeltrefseq)
+  else
+    return("~/.utilitybeltrefseq")
 }
 
 cache_file_location <- function(){
