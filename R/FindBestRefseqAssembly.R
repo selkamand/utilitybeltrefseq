@@ -152,11 +152,13 @@ delete_refseq_data_cache <- function(){
 #' @param break_ties_based_on_newest_sequence_added if we cant decide which is the best ref to use because they;re so similar - just pick the most recently uploaded sequence
 #' @param refseq_data_frame from \strong{load_refseq_data_frame_from_cache()}
 #' @param return_accession_only Return just the best assembly accession. If false will return a dataframe with accession ID plus lots of other info (bool)
+#' @param log_chosen_assembly should we log details of chosen assembly to a file in addition to printing the results
+#' @param logtitle title of logfile (best_assembly_for_taxid_`taxid`.txt")
 #'
 #' @return if return_accession_only=TRUE then best assembly accession (string). Otherwise returns dataframe with accession ID of best assembly plus lots of other info (bool)
 #' @export
 #'
-choose_best_assembly <- function(taxid_of_interest, intraspecific_filter = NA, break_ties_based_on_newest_sequence_added = TRUE, return_accession_only = TRUE, refseq_data_frame = load_refseq_data_frame_from_cache()){
+choose_best_assembly <- function(taxid_of_interest, intraspecific_filter = NA, break_ties_based_on_newest_sequence_added = TRUE, return_accession_only = TRUE, refseq_data_frame = load_refseq_data_frame_from_cache(), log_chosen_assembly = TRUE, logtitle = paste0("best_assembly_for_taxid_", taxid_of_interest, ".txt")){
 
   # Trigger error if refseq_data_frame doesnt exist
   invisible(utils::head(refseq_data_frame, n=1))
@@ -189,7 +191,8 @@ choose_best_assembly <- function(taxid_of_interest, intraspecific_filter = NA, b
     if(break_ties_based_on_newest_sequence_added){
       best_assemblies_final=dplyr::slice_max(best_assemblies, seq_rel_date)
       message("Multiple (", num_of_tied_assemblies,")", " best hits with score = ",score_of_tophit,". We will just return the the most recently added assembly with this quality\n")
-      prettyprint_single_row_df(best_assemblies_final, title = "Chosen Assembly: ")
+      prettyprint_single_row_df(best_assemblies_final, title = "Chosen Assembly: ", write_output_to_file = log_chosen_assembly, file_title = logtitle)
+      #if(log_chosen_assembly){ write(taxid_of_interest}
       if(return_accession_only) return(best_assemblies_final[["assembly_accession"]]) else return(dplyr::tibble(best_assemblies_final))
     }
     else{
@@ -200,16 +203,19 @@ choose_best_assembly <- function(taxid_of_interest, intraspecific_filter = NA, b
 
   }
 
-  if(return_accession_only) {prettyprint_single_row_df(best_assemblies, title = "Chosen Assembly: "); return(best_assemblies[["assembly_accession"]]) } else return(dplyr::tibble(best_assemblies))
+  if(return_accession_only) {prettyprint_single_row_df(best_assemblies, title = "Chosen Assembly: ", write_output_to_file = log_chosen_assembly, file_title = logtitle); return(best_assemblies[["assembly_accession"]]) } else return(dplyr::tibble(best_assemblies))
 }
 
 #' Pretty Print a Single Refseq Entry
 #'
 #' @param title text printed at the top of the prettyprint summary (string)
 #' @param single_row_of_tabular_data any dataframe with 1 row. Doesn't require any particular column_names / row typing. (data.frame)
+#' @param write_output_to_file should we write a simplified output to file (boolean)
+#' @param file_title required only if write_output_to_file == TRUE. Title of file to write output to (string)
+#' @param verbose verbosity level (boolean)
 #'
 #' @return NULL
-prettyprint_single_row_df <- function(single_row_of_tabular_data, title = NULL){
+prettyprint_single_row_df <- function(single_row_of_tabular_data, title = NULL, write_output_to_file = FALSE, file_title = NULL, verbose = TRUE){
   assertthat::assert_that(nrow(single_row_of_tabular_data) == 1, msg = utilitybeltassertions::fmterror("Function `prettyprint_assembly_entry` was designed to work with single row dataframes. Input dataframe has ", nrow(single_row_of_tabular_data), " entries"))
   names = names(single_row_of_tabular_data)
   values = as.character(single_row_of_tabular_data)
@@ -221,6 +227,12 @@ prettyprint_single_row_df <- function(single_row_of_tabular_data, title = NULL){
   }
 
   message(prettyprint_format)
+
+  if (write_output_to_file){
+    assertthat::assert_that(!is.null(file_title), msg = "[prettyprint_single_row_df] please specify the name of the text file you want to write output to using the `file_title` argument")
+    if(verbose) message("writing to file: [", file_title, "]")
+    utils::write.table(data.frame("Properties" = names, "Values" = values), file = file_title, sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+  }
 
   return(invisible(NULL))
 }
@@ -295,7 +307,7 @@ download_assembly_aria2c <- function(refseq_data_frame = load_refseq_data_frame_
 #' @export
 #'
 download_best_assembly <- function(taxid_of_interest, ...){
-  best_asssembly=target_assembly_accession = choose_best_assembly(taxid_of_interest = taxid_of_interest, return_accession_only = TRUE)
+  best_asssembly=target_assembly_accession = choose_best_assembly(taxid_of_interest = taxid_of_interest, return_accession_only = TRUE, log_chosen_assembly = TRUE)
   message("Attempting to download the best assembly for taxid ", taxid_of_interest, " (", best_asssembly, ")")
   res=download_assembly(target_assembly_accession = best_asssembly, ...)
   return(res)

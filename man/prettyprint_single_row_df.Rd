@@ -4,12 +4,24 @@
 \alias{prettyprint_single_row_df}
 \title{Pretty Print a Single Refseq Entry}
 \usage{
-prettyprint_single_row_df(single_row_of_tabular_data, title = NULL)
+prettyprint_single_row_df(
+  single_row_of_tabular_data,
+  title = NULL,
+  write_output_to_file = FALSE,
+  file_title = NULL,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{single_row_of_tabular_data}{any dataframe with 1 row. Doesn't require any particular column_names / row typing. (data.frame)}
 
 \item{title}{text printed at the top of the prettyprint summary (string)}
+
+\item{write_output_to_file}{should we write a simplified output to file (boolean)}
+
+\item{file_title}{required only if write_output_to_file == TRUE. Title of file to write output to (string)}
+
+\item{verbose}{verbosity level (boolean)}
 }
 \description{
 Pretty Print a Single Refseq Entry

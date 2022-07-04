@@ -9,7 +9,9 @@ choose_best_assembly(
   intraspecific_filter = NA,
   break_ties_based_on_newest_sequence_added = TRUE,
   return_accession_only = TRUE,
-  refseq_data_frame = load_refseq_data_frame_from_cache()
+  refseq_data_frame = load_refseq_data_frame_from_cache(),
+  log_chosen_assembly = TRUE,
+  logtitle = paste0("best_assembly_for_taxid_", taxid_of_interest, ".txt")
 )
 }
 \arguments{
@@ -22,6 +24,10 @@ choose_best_assembly(
 \item{return_accession_only}{Return just the best assembly accession. If false will return a dataframe with accession ID plus lots of other info (bool)}
 
 \item{refseq_data_frame}{from \strong{load_refseq_data_frame_from_cache()}}
+
+\item{log_chosen_assembly}{should we log details of chosen assembly to a file in addition to printing the results}
+
+\item{logtitle}{title of logfile (best_assembly_for_taxid_\code{taxid}.txt")}
 }
 \value{
 if return_accession_only=TRUE then best assembly accession (string). Otherwise returns dataframe with accession ID of best assembly plus lots of other info (bool)
