@@ -1,5 +1,9 @@
 
 
+
+# RefSeq Metadata Cache ------------------------------------------------------------
+
+
 #' Cache refseq contents
 #'
 #' Download a file that lists metadata for all refseq entries (including ftp path).
@@ -145,6 +149,44 @@ delete_refseq_data_cache <- function(){
 }
 
 
+
+#' Pretty Print a Single Refseq Entry
+#'
+#' @param title text printed at the top of the prettyprint summary (string)
+#' @param single_row_of_tabular_data any dataframe with 1 row. Doesn't require any particular column_names / row typing. (data.frame)
+#' @param write_output_to_file should we write a simplified output to file (boolean)
+#' @param file_title required only if write_output_to_file == TRUE. Title of file to write output to (string)
+#' @param verbose verbosity level (boolean)
+#'
+#' @return NULL
+prettyprint_single_row_df <- function(single_row_of_tabular_data, title = NULL, write_output_to_file = FALSE, file_title = NULL, verbose = TRUE){
+  assertthat::assert_that(nrow(single_row_of_tabular_data) == 1, msg = utilitybeltassertions::fmterror("Function `prettyprint_assembly_entry` was designed to work with single row dataframes. Input dataframe has ", nrow(single_row_of_tabular_data), " entries"))
+  names = names(single_row_of_tabular_data)
+  values = as.character(single_row_of_tabular_data)
+
+  prettyprint_format = paste("\t", utilitybeltassertions::fmtbold(names), "\t",values, "\n")
+
+  if(!is.null(title)){
+    message(utilitybeltassertions::fmtbold(title))
+  }
+
+  message(prettyprint_format)
+
+  if (write_output_to_file){
+    assertthat::assert_that(!is.null(file_title), msg = "[prettyprint_single_row_df] please specify the name of the text file you want to write output to using the `file_title` argument")
+    if(verbose) message("writing to file: [", file_title, "]")
+    utils::write.table(data.frame("Properties" = names, "Values" = values), file = file_title, sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+  }
+
+  return(invisible(NULL))
+}
+
+
+
+# Choose Best Assembly ----------------------------------------------------
+
+
+
 #' Best Assembly
 #'
 #' @param taxid_of_interest taxonomyID (int)
@@ -179,10 +221,10 @@ choose_best_assembly <- function(taxid_of_interest, intraspecific_filter = NA, b
       dplyr::filter(infraspecific_name == intraspecific_filter)
     assertthat::assert_that(nrow(best_assemblies) > 0, msg = utilitybeltassertions::fmterror("The addition of intraspecific species filter: [",intraspecific_filter,"] does not contain any of the species level best assemblies"))
 
-  assertthat::assert_that(
-    best_assemblies[["ref_score"]] > 0,
-    msg = utilitybeltassertions::fmterror("Couldn't find any decent assemblies to use: perhaps try to manually find a good refseq assembly accession?"))
-    }
+    assertthat::assert_that(
+      best_assemblies[["ref_score"]] > 0,
+      msg = utilitybeltassertions::fmterror("Couldn't find any decent assemblies to use: perhaps try to manually find a good refseq assembly accession?"))
+  }
 
   score_of_tophit = max(best_assemblies[["ref_score"]])
   if (nrow(best_assemblies) > 1){
@@ -206,136 +248,108 @@ choose_best_assembly <- function(taxid_of_interest, intraspecific_filter = NA, b
   if(return_accession_only) {prettyprint_single_row_df(best_assemblies, title = "Chosen Assembly: ", write_output_to_file = log_chosen_assembly, file_title = logtitle); return(best_assemblies[["assembly_accession"]]) } else return(dplyr::tibble(best_assemblies))
 }
 
-#' Pretty Print a Single Refseq Entry
+# Download Refseq Files ---------------------------------------------------
+
+#' download refseq assembly files
 #'
-#' @param title text printed at the top of the prettyprint summary (string)
-#' @param single_row_of_tabular_data any dataframe with 1 row. Doesn't require any particular column_names / row typing. (data.frame)
-#' @param write_output_to_file should we write a simplified output to file (boolean)
-#' @param file_title required only if write_output_to_file == TRUE. Title of file to write output to (string)
-#' @param verbose verbosity level (boolean)
+#' @param target_assembly_accession accession of assembly you're interested in. For example GCF_000371765.1 (string)
+#' @param assembly_file_type type of file to download from refseq repo (string)
+#' @param output_folder directory to output file into (string)
+#' @param refseq_data_frame do not reccomend changing this. Automatically loads from \strong{load_refseq_data_frame_from_cache()}
 #'
-#' @return NULL
-prettyprint_single_row_df <- function(single_row_of_tabular_data, title = NULL, write_output_to_file = FALSE, file_title = NULL, verbose = TRUE){
-  assertthat::assert_that(nrow(single_row_of_tabular_data) == 1, msg = utilitybeltassertions::fmterror("Function `prettyprint_assembly_entry` was designed to work with single row dataframes. Input dataframe has ", nrow(single_row_of_tabular_data), " entries"))
-  names = names(single_row_of_tabular_data)
-  values = as.character(single_row_of_tabular_data)
-
-  prettyprint_format = paste("\t", utilitybeltassertions::fmtbold(names), "\t",values, "\n")
-
-  if(!is.null(title)){
-    message(utilitybeltassertions::fmtbold(title))
-  }
-
-  message(prettyprint_format)
-
-  if (write_output_to_file){
-    assertthat::assert_that(!is.null(file_title), msg = "[prettyprint_single_row_df] please specify the name of the text file you want to write output to using the `file_title` argument")
-    if(verbose) message("writing to file: [", file_title, "]")
-    utils::write.table(data.frame("Properties" = names, "Values" = values), file = file_title, sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
-  }
-
-  return(invisible(NULL))
-}
-
-#' Download reference genome
-#'
-#' Actually download the genome assembly
-#'
-#' @inheritParams choose_best_assembly
-#' @param target_assembly_accession accession of target assembly
-#' @param output_folder directory to save assembly fasta file into (string)
-#'
-#' @return filepath of downloaded file
+#' @return path to downloaded file
 #' @export
-download_assembly <- function(target_assembly_accession, output_folder = getwd(), refseq_data_frame = load_refseq_data_frame_from_cache()){
+#'
+#' @examples
+#' \dontrun{
+#' download_assembly_files(
+#'   target_assembly_accession = "GCF_000371765.1",
+#'   assembly_file_type = "genome"
+#' )
+#' }
+#'
+download_assembly_files <- function(target_assembly_accession, assembly_file_type = c("genome", "stats", "genome_annotation"), output_folder = getwd(), refseq_data_frame = load_refseq_data_frame_from_cache()){
+  assembly_file_type <- rlang::arg_match(assembly_file_type)
+  assembly_file_extension = dplyr::case_when(
+    assembly_file_type == "genome" ~ "_genomic.fna.gz",
+    assembly_file_type == "stats" ~ "_assembly_stats.txt",
+    assembly_file_type == "annotation" ~ "_genomic.gff.gz",
+    TRUE ~ NA_character_
+    )
 
-  #browser()
+  assertthat::assert_that(!is.na(assembly_file_extension), msg = paste0("Failed to recognise assembly_file_type == ", assembly_file_type))
   assertthat::assert_that(target_assembly_accession %in% refseq_data_frame[["assembly_accession"]])
 
-  refseq_data_frame = refseq_data_frame %>%
-    dplyr::filter(assembly_accession %in% target_assembly_accession)
+  message("Seaching for ", assembly_file_type, " of assembly: ", target_assembly_accession)
 
-  assertthat::assert_that(nrow(refseq_data_frame) == 1)
+  refseq_data_frame = dplyr::filter(
+      .data = refseq_data_frame,
+      assembly_accession %in% target_assembly_accession
+      )
+
+  assertthat::assert_that(nrow(refseq_data_frame) != 0, msg = paste0("Could not find assembly [", target_assembly_accession, "] in the local cache of refseq assemblies. If you're sure the assembly accession code is correct, try updating the local cache by running `update_refseq_data_cache()`"))
+  assertthat::assert_that(nrow(refseq_data_frame) <= 1, msg = paste0("Found multiple  entries for assembly [", target_assembly_accession, "] in the local cache. This is unexpected ... please send assembly code used and this error message to package maintainer"))
 
   sequence_file_name = basename(refseq_data_frame[["ftp_path"]])
   ftp_root = refseq_data_frame[["ftp_path"]]
-  assembly_fasta_path = paste0(ftp_root, "/", sequence_file_name, "_genomic.fna.gz")
-  #browser()
+  assembly_file_path = paste0(ftp_root, "/", sequence_file_name, assembly_file_extension)
 
   assertthat::assert_that(dir.exists(output_folder), msg = utilitybeltassertions::fmterror("Could not find folder: ", output_folder))
-  full_dest_filepath = paste0(output_folder, "/", basename(assembly_fasta_path))
+  full_dest_filepath = paste0(output_folder, "/", basename(assembly_file_path))
 
-  message("downloading assembly:\n\t[", target_assembly_accession, "]\n\nfrom the RefSeq ftp link \n\t[", assembly_fasta_path, "]\nto:\t", full_dest_filepath)
+  message("downloading assembly file [type = ",assembly_file_type ,"]:\n\t[", target_assembly_accession, "]\n\nfrom the RefSeq ftp link \n\t[", assembly_file_path, "]\nto:\t", full_dest_filepath)
 
-  utils::download.file(assembly_fasta_path, destfile =  full_dest_filepath)
+  utils::download.file(assembly_file_path, destfile =  full_dest_filepath)
 
   return(full_dest_filepath)
 }
 
 
-download_assembly_aria2c <- function(refseq_data_frame = load_refseq_data_frame_from_cache(), target_assembly_accession){
+#' Download reference genome
+#'
+#' Download the genome assembly
+#'
+#' @inheritParams download_assembly_files
+#' @inherit download_assembly_files
+#' @export
+refseq_download_genome_assembly <- function(target_assembly_accession, output_folder = getwd(), refseq_data_frame = load_refseq_data_frame_from_cache()){
+  download_assembly_files(target_assembly_accession = target_assembly_accession, assembly_file_type = "genome", output_folder = output_folder, refseq_data_frame = refseq_data_frame)
+}
 
-  utilitybeltassertions::assert_program_exists_in_path("aria2c")
-  #browser()
-  assertthat::assert_that(target_assembly_accession %in% refseq_data_frame[["assembly_accession"]])
-
-  refseq_data_frame = refseq_data_frame %>%
-    dplyr::filter(assembly_accession %in% target_assembly_accession)
-
-  assertthat::assert_that(nrow(refseq_data_frame) == 1)
-
-  sequence_file_name = basename(refseq_data_frame[["ftp_path"]])
-  ftp_root = refseq_data_frame[["ftp_path"]]
-  assembly_fasta_path = paste0(ftp_root, "/", sequence_file_name, "_genomic.fna.gz")
-#browser()
-  message("downloading assembly:\n\t[", target_assembly_accession, "]\n\nfrom the RefSeq ftp link \n\t[", assembly_fasta_path, "]")
-
-  res=system(paste0("aria2c ", assembly_fasta_path))
-  if (res != 0)
-    message("Download failed")
-  else
-    message("download complete")
-
-  #sys.calls(
+#' download_assembly_stats
+#'
+#' @inheritParams download_assembly_files
+#' @inherit download_assembly_files
+#' @export
+#' @examples
+#' refseq_download_genome_assembly_stats("GCF_000371765.1")
+refseq_download_genome_assembly_stats <- function(target_assembly_accession, output_folder = getwd(), refseq_data_frame = load_refseq_data_frame_from_cache()){
+  download_assembly_files(target_assembly_accession = target_assembly_accession, assembly_file_type = "stats", output_folder = output_folder, refseq_data_frame = refseq_data_frame)
 }
 
 #' Download_best_assembly
 #'
-#' @inheritDotParams download_assembly
+#' @inheritDotParams refseq_download_genome_assembly
 #' @inheritParams choose_best_assembly
-#' @inherit download_assembly return
+#' @inherit refseq_download_genome_assembly return
 #' @export
 #'
-download_best_assembly <- function(taxid_of_interest, ...){
+download_best_assembly <- function(taxid_of_interest, download_stats = TRUE, ...){
   best_asssembly=target_assembly_accession = choose_best_assembly(taxid_of_interest = taxid_of_interest, return_accession_only = TRUE, log_chosen_assembly = TRUE)
   message("Attempting to download the best assembly for taxid ", taxid_of_interest, " (", best_asssembly, ")")
-  res=download_assembly(target_assembly_accession = best_asssembly, ...)
+  res=refseq_download_genome_assembly(target_assembly_accession = best_asssembly, ...)
+
+  if(download_stats){
+    stats = refseq_download_genome_assembly_stats(target_assembly_accession = best_asssembly, ...)
+  }
+
   return(res)
 }
 
-# download_annotations <- function(refseq_data_frame = load_refseq_data_frame_from_cache(), target_assembly_accession, outfile_dir = "."){
-#
-#   utilitybeltassertions::assert_program_exists_in_path("aria2c")
-#   #browser()
-#   assertthat::assert_that(target_assembly_accession %in% refseq_data_frame[["assembly_accession"]])
-#
-#   refseq_data_frame = refseq_data_frame %>%
-#     dplyr::filter(assembly_accession %in% target_assembly_accession)
-#
-#   assertthat::assert_that(nrow(refseq_data_frame) == 1)
-#
-#   sequence_file_name = basename(refseq_data_frame[["ftp_path"]])
-#   ftp_root = refseq_data_frame[["ftp_path"]]
-#   assembly_fasta_path = paste0(ftp_root, "/", sequence_file_name, "_genomic.gtf.gz")
-#   #browser()
-#   message("downloading assembly:\n\t[", target_assembly_accession, "]\n\nfrom the RefSeq ftp link \n\t[", assembly_fasta_path, "]")
-#
-#   res=system(paste0("aria2c ", assembly_fasta_path))
-#   if (res != 0)
-#    message("Download failed")
-#   else
-#     message("download complete")
-# }
+
+# Dependent on CLI tools---------------------------------------------------------------------
+
+
 
 #' List commandline scripts
 #'

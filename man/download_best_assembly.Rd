@@ -4,21 +4,21 @@
 \alias{download_best_assembly}
 \title{Download_best_assembly}
 \usage{
-download_best_assembly(taxid_of_interest, ...)
+download_best_assembly(taxid_of_interest, download_stats = TRUE, ...)
 }
 \arguments{
 \item{taxid_of_interest}{taxonomyID (int)}
 
 \item{...}{
-  Arguments passed on to \code{\link[=download_assembly]{download_assembly}}
+  Arguments passed on to \code{\link[=refseq_download_genome_assembly]{refseq_download_genome_assembly}}
   \describe{
-    \item{\code{target_assembly_accession}}{accession of target assembly}
-    \item{\code{output_folder}}{directory to save assembly fasta file into (string)}
-    \item{\code{refseq_data_frame}}{from \strong{load_refseq_data_frame_from_cache()}}
+    \item{\code{target_assembly_accession}}{accession of assembly you're interested in. For example GCF_000371765.1 (string)}
+    \item{\code{output_folder}}{directory to output file into (string)}
+    \item{\code{refseq_data_frame}}{do not reccomend changing this. Automatically loads from \strong{load_refseq_data_frame_from_cache()}}
   }}
 }
 \value{
-filepath of downloaded file
+path to downloaded file
 }
 \description{
 Download_best_assembly
